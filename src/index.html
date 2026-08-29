@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <title>AXIOM Software Factory</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta name="theme-color" content="#06070B">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Ten specialist agents carry one requirement from refinement through architecture, stories, tests, code and a security audit — with an approval gate at every stage.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AXIOM Software Factory">
+  <meta property="og:description" content="Ten agents, ten approval gates. One requirement in, a complete engineering record out.">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!--
+    The three faces the design system actually names. The previous markup
+    loaded Poppins, Font Awesome and Material Icons — none of which appear
+    anywhere in the stylesheet or a component — while Sora, Instrument Sans and
+    Azeret Mono were never fetched at all, so every surface silently fell back
+    to system-ui. Preconnect first so the fetch starts before the CSS parses.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Instrument+Sans:wght@400;500;600&family=Azeret+Mono:wght@400;500;600&display=swap">
+
+  <style>
+    /* Painted before the bundle parses, so the first frame is the product's
+       own black rather than a white flash. */
+    html, body { background: #06070B; color: #F2F3F7; margin: 0; }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

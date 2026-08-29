@@ -1,0 +1,790 @@
+/* ===========================================================================
+   AXIOM — Console design system
+   ---------------------------------------------------------------------------
+   Single theme. Dark only. Built from nothing — no token, face, or component
+   carried over from any previous revision of this app.
+
+   MATERIAL
+     Ground is true black-blue. Panels are glass: a 3-6% white wash over the
+     ground, one hairline edge, and blur. Depth comes from light passing
+     THROUGH a surface, not from a shadow cast under it.
+
+   LIGHT
+     One plasma: violet to cyan. It appears as a rim, a bloom, or a trace —
+     never as a fill behind text. Status colour is separate from plasma and is
+     the only other hue on the page.
+
+   TYPE
+     Sora carries display. Instrument Sans carries interface. Azeret Mono
+     carries every number, key, and identifier, always tabular.
+
+   RULES
+     - No component hardcodes a colour. Add a token.
+     - No decorative icon. A glyph must encode state or identity.
+     - Borders are 1px hairline-alpha, or absent.
+   =========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ---- ground & glass ---- */
+  --void:        #06070B;
+  --ground:      #090B11;
+  --raise:       rgba(255, 255, 255, 0.032);
+  --raise-2:     rgba(255, 255, 255, 0.055);
+  --raise-3:     rgba(255, 255, 255, 0.085);
+  --sink:        rgba(0, 0, 0, 0.34);
+
+  /* ---- edges ---- */
+  --edge:        rgba(255, 255, 255, 0.075);
+  --edge-2:      rgba(255, 255, 255, 0.14);
+  --edge-live:   rgba(150, 120, 255, 0.42);
+
+  /* ---- ink ---- */
+  --ink:         #F2F3F7;
+  --ink-2:       #9BA1B4;
+  --ink-3:       #61677A;
+  --ink-4:       #3B4052;
+  --on-plasma:   #0A0612;
+
+  /* ---- plasma: the only brand light ---- */
+  --plasma-a:    #8B5CF6;
+  --plasma-b:    #22D3EE;
+  --plasma:      linear-gradient(115deg, var(--plasma-a), var(--plasma-b));
+  --plasma-dim:  linear-gradient(115deg, rgba(139,92,246,.22), rgba(34,211,238,.22));
+  --plasma-solid:#7C5CFF;
+
+  /* ---- status: separate from plasma, the only other hue ---- */
+  --ok:          #34D399;
+  --run:         #FBBF24;
+  --review:      #A78BFA;
+  --bad:         #FB7185;
+  --idle:        #4B5162;
+
+  /* ---- geometry ---- */
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 16px;
+  --r-full: 999px;
+
+  /* ---- type ---- */
+  --f-display: 'Sora', system-ui, sans-serif;
+  --f-ui:      'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --f-mono:    'Azeret Mono', ui-monospace, monospace;
+
+  /* ---- rhythm ---- */
+  --gut: clamp(18px, 3.4vw, 40px);
+  --max: 1320px;
+  --rail: 232px;
+  --top: 56px;
+
+  --ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+/* ---------------------------------------------------------------------------
+   Reset
+   --------------------------------------------------------------------------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; color-scheme: dark; }
+
+body {
+  min-height: 100dvh;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--void);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection { background: rgba(139, 92, 246, .32); color: #fff; }
+
+h1, h2, h3, h4 {
+  font-family: var(--f-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(2.4rem, 5.6vw, 4.6rem); font-weight: 700; }
+h2 { font-size: clamp(1.6rem, 3vw, 2.5rem); }
+h3 { font-size: 1.12rem; }
+h4 { font-size: .96rem; }
+
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; color: inherit; background: none; border: 0; }
+button { cursor: pointer; }
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--plasma-solid);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+/* ===========================================================================
+   AMBIENT FIELD — the animated background
+   ---------------------------------------------------------------------------
+   Three slow-drifting plasma blooms over the void, plus a grain plate and a
+   faint lattice. Fixed and non-interactive, so it never affects layout or
+   hit-testing.
+   =========================================================================== */
+.ax-field { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+
+.ax-bloom {
+  position: absolute;
+  width: 58vw; height: 58vw;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: .30;
+  will-change: transform;
+}
+.ax-bloom--1 { top: -22%; left: -12%;  background: radial-gradient(circle, #6D28D9, transparent 66%); animation: drift-a 34s ease-in-out infinite; }
+.ax-bloom--2 { top: 22%;  right: -20%; background: radial-gradient(circle, #0E7490, transparent 66%); animation: drift-b 44s ease-in-out infinite; }
+.ax-bloom--3 { bottom: -30%; left: 24%; background: radial-gradient(circle, #4C1D95, transparent 66%); animation: drift-c 52s ease-in-out infinite; }
+
+@keyframes drift-a { 0%,100% { transform: translate3d(0,0,0) scale(1); }    50% { transform: translate3d(9vw, 6vh, 0) scale(1.14); } }
+@keyframes drift-b { 0%,100% { transform: translate3d(0,0,0) scale(1.08); } 50% { transform: translate3d(-11vw, 9vh, 0) scale(.92); } }
+@keyframes drift-c { 0%,100% { transform: translate3d(0,0,0) scale(.96); }  50% { transform: translate3d(7vw, -8vh, 0) scale(1.18); } }
+
+/* Grain keeps large flat areas from banding. */
+.ax-grain {
+  position: absolute; inset: -50%;
+  opacity: .16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+}
+
+/* A faint lattice so the void reads as a surface, not a hole. */
+.ax-lattice {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.017) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.017) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, #000 30%, transparent 78%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, #000 30%, transparent 78%);
+}
+
+/* ===========================================================================
+   GLASS — the one container primitive
+   =========================================================================== */
+.glass {
+  position: relative;
+  background: var(--raise);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-2);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+}
+
+/* A plasma rim that lights only where the cursor is. Components set --mx/--my. */
+.glass--live::before {
+  content: '';
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(200px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(150,120,255,.75), transparent 62%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+  pointer-events: none;
+}
+.glass--live:hover::before { opacity: 1; }
+
+/* An interior spotlight that follows the cursor across a card. */
+.glass--spot::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 50%),
+              rgba(139,92,246,.13), transparent 60%);
+  opacity: 0;
+  transition: opacity .4s var(--ease);
+  pointer-events: none;
+}
+.glass--spot:hover::after { opacity: 1; }
+
+/* ===========================================================================
+   ATOMS
+   =========================================================================== */
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+
+.tag {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 38px; padding: 0 18px;
+  font-size: 13.5px; font-weight: 600;
+  border-radius: var(--r-1);
+  background: var(--raise-2);
+  color: var(--ink);
+  transition: background .2s var(--ease), transform .2s var(--ease), color .2s var(--ease);
+}
+.btn:hover { background: var(--raise-3); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn--plasma {
+  background: var(--plasma);
+  color: var(--on-plasma);
+  font-weight: 700;
+  position: relative;
+  overflow: hidden;
+}
+.btn--plasma::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.42), transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .7s var(--ease);
+}
+.btn--plasma:hover::after { transform: translateX(120%); }
+.btn--quiet { background: transparent; box-shadow: inset 0 0 0 1px var(--edge-2); }
+.btn--quiet:hover { background: var(--raise); }
+.btn:disabled { opacity: .38; pointer-events: none; }
+
+.field {
+  width: 100%; height: 42px; padding: 0 14px;
+  background: var(--sink);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-1);
+  color: var(--ink);
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.field::placeholder { color: var(--ink-4); }
+.field:focus { outline: none; border-color: var(--edge-live); box-shadow: 0 0 0 3px rgba(139,92,246,.15); }
+
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c, var(--idle));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, var(--idle)) 18%, transparent);
+  flex: none;
+}
+.dot--beat { animation: beat 1.8s ease-in-out infinite; }
+@keyframes beat { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ===========================================================================
+   MOTION
+   =========================================================================== */
+@keyframes rise  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes wipe  { to { transform: translateY(0); } }
+@keyframes sweep { from { background-position: -220% 0; } to { background-position: 220% 0; } }
+@keyframes trace { to { stroke-dashoffset: 0; } }
+@keyframes spin  { to { transform: rotate(360deg); } }
+
+.rise { animation: rise .6s var(--ease) both; }
+
+/* Line-by-line masked reveal for display type. */
+.wipe { display: block; overflow: hidden; }
+.wipe > span { display: block; transform: translateY(110%); animation: wipe .95s var(--ease) both; }
+
+/* Scroll-triggered reveal.
+   The hidden state is scoped to [data-reveal], which [axReveal] stamps on its
+   host at runtime. Without that stamp the content is simply visible — so a
+   failed script, a missing IntersectionObserver, or a prerender can never
+   leave a section permanently at opacity 0. */
+.reveal { opacity: 1; transform: none; }
+[data-reveal] .reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .8s var(--ease), transform .8s var(--ease);
+}
+[data-reveal] .reveal.seen { opacity: 1; transform: none; }
+
+.shimmer {
+  background: linear-gradient(90deg, var(--raise) 25%, var(--raise-2) 50%, var(--raise) 75%);
+  background-size: 220% 100%;
+  animation: sweep 1.4s linear infinite;
+  border-radius: var(--r-1);
+}
+
+/* ===========================================================================
+   SCROLLBAR
+   =========================================================================== */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--raise-3); border-radius: var(--r-full); border: 2px solid var(--void); }
+::-webkit-scrollbar-thumb:hover { background: var(--plasma-solid); }
+* { scrollbar-width: thin; scrollbar-color: var(--raise-3) transparent; }
+
+/* ===========================================================================
+   A11Y
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  [data-reveal] .reveal { opacity: 1; transform: none; }
+  .wipe > span { transform: none; }
+  .ax-bloom { animation: none; }
+}
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+
+/* ===========================================================================
+   LAYOUT — routed page gutter
+   ---------------------------------------------------------------------------
+   Every routed page is a bare section; the shell gives it the gutter and the
+   max width so no page has to repeat that.
+   =========================================================================== */
+.main > * { display: block; padding: var(--gut); max-width: var(--max); margin: 0 auto; }
+
+/* ===========================================================================
+   INTERACTION LAYER
+   ---------------------------------------------------------------------------
+   Hover, press, and pointer-reactive behaviour, factored out of components so
+   every surface in the app reacts the same way.
+
+   RULES OBSERVED THROUGHOUT
+     - Only transform / opacity / filter animate. Nothing here touches layout.
+     - Every transition names its properties. `transition: all` is never used.
+     - Hover motion is gated behind (hover:hover). A tap on touch fires a
+       phantom hover and would leave the element stuck in its hover state.
+     - Press is always scale(.96). Below that reads as a gimmick.
+   =========================================================================== */
+
+:root {
+  /* Companion curves to --ease. --ease stays the house ease-out and the
+     default; these two cover the cases it reads wrong on. */
+  --ease-io:   cubic-bezier(.77, 0, .175, 1);   /* on-screen movement, both ends anchored */
+  --ease-soft: cubic-bezier(.33, 1, .68, 1);    /* gentle settle for ambient motion */
+
+  /* Durations. Interface motion stays under 300ms; ambient may exceed it. */
+  --t-press: .1s;
+  --t-hov:   .18s;
+  --t-move:  .24s;
+}
+
+/* ---------------------------------------------------------------------------
+   Press
+   Anything clickable. A transition, not a keyframe, so a rapid double-click
+   retargets from where it is instead of restarting.
+   --------------------------------------------------------------------------- */
+.press { transition: transform var(--t-press) var(--ease); }
+.press:active { transform: scale(.96); }
+.press[disabled], .press:disabled { transform: none; }
+.btn:active:not(:disabled) { transform: scale(.96); }
+
+/* ---------------------------------------------------------------------------
+   Lift — the standard card hover.
+   Y-translate and edge only. No shadow growth: depth in this system comes from
+   light passing through glass, never from a shadow cast beneath it.
+   --------------------------------------------------------------------------- */
+.lift { transition: transform var(--t-hov) var(--ease), border-color var(--t-hov) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .lift:hover { transform: translateY(-3px); border-color: var(--edge-2); }
+}
+.lift:active { transform: translateY(-1px) scale(.99); }
+
+/* ---------------------------------------------------------------------------
+   Tilt — [axTilt] writes --rx/--ry from pointer position.
+   --------------------------------------------------------------------------- */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  transition: transform .35s var(--ease);
+  transform-style: preserve-3d;
+}
+/* .tilt and .lift both declare transition and the later rule wins outright, so a
+   card carrying both loses the edge fade. Compose the two explicitly: the tilt
+   duration governs transform, and border-color keeps its own. */
+.tilt.lift { transition: transform .35s var(--ease), border-color var(--t-hov) var(--ease); }
+
+/* ---------------------------------------------------------------------------
+   Magnet — [axMagnet] leans the element toward the cursor as it nears.
+   For a single primary action. A wall of magnetic buttons is noise.
+   --------------------------------------------------------------------------- */
+.magnet {
+  transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+  transition: transform .28s var(--ease);
+}
+
+/* ---------------------------------------------------------------------------
+   Sheen — one band of light crossing a surface on hover.
+   --------------------------------------------------------------------------- */
+.sheen { position: relative; overflow: hidden; isolation: isolate; }
+.sheen::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(115deg, transparent 34%, rgba(255,255,255,.11), transparent 66%);
+  transform: translateX(-130%);
+  transition: transform .8s var(--ease);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sheen:hover::after { transform: translateX(130%); }
+}
+
+/* ---------------------------------------------------------------------------
+   Underglow — a plasma pool blooming beneath an element on hover.
+   --------------------------------------------------------------------------- */
+.uglow { position: relative; }
+.uglow::before {
+  content: '';
+  position: absolute; left: 12%; right: 12%; bottom: -8px; height: 22px;
+  border-radius: 50%;
+  background: var(--plasma);
+  filter: blur(16px);
+  opacity: 0;
+  transition: opacity var(--t-hov) var(--ease);
+  pointer-events: none; z-index: -1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .uglow:hover::before { opacity: .42; }
+}
+
+/* ---------------------------------------------------------------------------
+   Edge trace — the hairline under an element fills plasma left to right.
+   --------------------------------------------------------------------------- */
+.etrace { position: relative; }
+.etrace::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: var(--plasma);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform var(--t-move) var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .etrace:hover::after { transform: scaleX(1); }
+}
+
+/* ---------------------------------------------------------------------------
+   Media
+   Images carry a 1px white-at-10% outline so their edge reads consistently
+   against glass — a tinted neutral there picks up the surface below and looks
+   like dirt on the image edge.
+   --------------------------------------------------------------------------- */
+.img { display: block; max-width: 100%; height: auto; outline: 1px solid rgba(255,255,255,.1); outline-offset: -1px; }
+.img--cover { width: 100%; height: 100%; object-fit: cover; }
+
+/* A plate holds one of the brand key visuals behind content. */
+.plate { position: relative; overflow: hidden; isolation: isolate; }
+.plate > .plate-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: -2;
+  opacity: var(--plate-o, .5);
+}
+.plate > .plate-scrim {
+  position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, var(--void) 6%, rgba(6,7,11,.74) 48%, rgba(6,7,11,.26) 100%);
+}
+.plate--even > .plate-scrim {
+  background: linear-gradient(180deg, rgba(6,7,11,.42), rgba(6,7,11,.86));
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll progress — plasma hairline pinned under the top edge.
+   --------------------------------------------------------------------------- */
+.sprog {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 400;
+  transform-origin: left; pointer-events: none;
+  background: var(--plasma);
+  transform: scaleX(var(--p, 0));
+}
+
+/* ---------------------------------------------------------------------------
+   Marquee — constant motion, so linear. Track is duplicated for a seamless
+   wrap; hover pauses it so a reader can actually read a passing item.
+   --------------------------------------------------------------------------- */
+.mq {
+  display: flex; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.mq-t { display: flex; flex: none; gap: 34px; padding-right: 34px; animation: mq var(--mq-d, 34s) linear infinite; }
+@keyframes mq { to { transform: translateX(-100%); } }
+@media (hover: hover) and (pointer: fine) { .mq:hover .mq-t { animation-play-state: paused; } }
+
+/* ---------------------------------------------------------------------------
+   Reduced motion
+   Fewer and gentler, not zero: hover colour and opacity survive, every
+   position change is removed.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .lift:hover, .lift:active,
+  .press:active, .btn:active:not(:disabled) { transform: none; }
+  .tilt, .magnet { transform: none; }
+  .sheen::after { display: none; }
+  .mq-t { animation: none; }
+  .etrace::after { transition: none; }
+}
+
+/* ===========================================================================
+   AGENT OUTPUT DOCUMENT
+   ---------------------------------------------------------------------------
+   These rules live here, in the GLOBAL sheet, and not in the component that
+   renders them — deliberately.
+
+   The document is injected with [innerHTML]. Angular's emulated encapsulation
+   rewrites a component's selectors to `.md-body[_ngcontent-x] h1[_ngcontent-x]`,
+   and it only stamps `_ngcontent` on elements IT creates. Nothing inside
+   innerHTML carries that attribute, so a component-scoped `.md-body h1` rule
+   matches nothing and the bare global `h1` (clamp up to 4.6rem, sized for a
+   landing page) wins instead. That is why an agent's title used to render three
+   lines tall and shove the Approve/Rework/Reject panel off the viewport.
+
+   Everything below is therefore unscoped, and every rule is written to contain
+   its content: no child may set the width of the column it sits in.
+   =========================================================================== */
+
+.md-body {
+  /* Independent of the display scale used by page furniture. */
+  font-family: var(--f-ui);
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  /* Agent output is full of long identifiers — RequirementAnalysisRefinementAgent,
+     package.paths, URLs. Without this they refuse to break and blow the grid
+     out sideways. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ---------------------------------------------------------------------------
+   Headings
+   A compressed scale. This is a technical document inside a panel, not a page:
+   h1 needs to read as a title without behaving like a hero.
+   --------------------------------------------------------------------------- */
+.md-body :is(h1, h2, h3, h4, h5, h6),
+.md-body :is(.md-h1, .md-h2, .md-h3, .md-h4, .md-h5, .md-h6) {
+  font-family: var(--f-display);
+  color: var(--ink);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: pretty;
+  margin: 1.6em 0 0.5em;
+}
+.md-body > :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+
+.md-body :is(h1, .md-h1) {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid var(--edge);
+}
+.md-body :is(h2, .md-h2) {
+  font-size: 1.18rem;
+  font-weight: 650;
+  margin-top: 1.9em;
+}
+.md-body :is(h3, .md-h3) { font-size: 1.02rem; font-weight: 600; }
+.md-body :is(h4, .md-h4) { font-size: 0.94rem; font-weight: 600; color: var(--ink-2); }
+.md-body :is(h5, .md-h5),
+.md-body :is(h6, .md-h6) {
+  font-size: 0.84rem; font-weight: 600; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+/* A plasma tick in the gutter marks where each major section starts. */
+.md-body :is(h2, .md-h2) { position: relative; padding-left: 14px; }
+.md-body :is(h2, .md-h2)::before {
+  content: '';
+  position: absolute; left: 0; top: 0.28em; bottom: 0.28em;
+  width: 2px; border-radius: 2px;
+  background: var(--plasma);
+}
+
+/* ---------------------------------------------------------------------------
+   Body copy
+   --------------------------------------------------------------------------- */
+.md-body :is(p, .md-p) { margin: 0.75em 0; max-width: 78ch; }
+.md-body strong { color: var(--ink); font-weight: 600; }
+.md-body em { color: var(--ink-2); }
+.md-body a { color: var(--plasma-b); text-decoration: underline; text-underline-offset: 2px; }
+.md-body a:hover { color: var(--ink); }
+
+.md-body :is(ul, ol, .md-list) { margin: 0.75em 0; padding-left: 1.35em; max-width: 78ch; }
+.md-body li { margin: 0.35em 0; }
+.md-body li::marker { color: var(--plasma-a); }
+.md-body :is(ul, ol) :is(ul, ol) { margin: 0.3em 0; }
+
+.md-body .md-hr, .md-body hr {
+  border: 0; height: 1px; background: var(--edge); margin: 2em 0;
+}
+.md-body .md-spacer { height: 0.5em; }
+
+.md-body .md-blockquote, .md-body blockquote {
+  margin: 1em 0; padding: 0.7em 1em;
+  border-left: 2px solid var(--plasma-solid);
+  background: var(--raise);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  color: var(--ink-3);
+  max-width: 78ch;
+}
+.md-body .md-blockquote > :first-child { margin-top: 0; }
+.md-body .md-blockquote > :last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------------------
+   Code
+   Both scroll rather than stretch. `min-width:0` on the pre is what actually
+   lets it shrink inside a grid column.
+   --------------------------------------------------------------------------- */
+.md-body .md-inline-code, .md-body code {
+  font-family: var(--f-mono);
+  font-size: 0.86em;
+  background: var(--raise-2);
+  color: var(--ink);
+  padding: 0.12em 0.4em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.md-body .md-code-block, .md-body pre {
+  margin: 1em 0;
+  padding: 13px 15px;
+  background: var(--sink);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-1);
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.md-body :is(.md-code-block, pre) code {
+  background: none; padding: 0; border-radius: 0;
+  font-size: 12.5px; line-height: 1.65;
+  color: var(--ink-2);
+  white-space: pre;
+}
+
+/* ---------------------------------------------------------------------------
+   Tables
+   The wrapper scrolls; the table itself is never allowed to set the column
+   width. A wide requirements matrix is common in this output.
+   --------------------------------------------------------------------------- */
+.md-body .md-table-wrapper {
+  margin: 1em 0;
+  overflow-x: auto;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-1);
+  max-width: 100%;
+}
+.md-body .md-table, .md-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  /* auto, not fixed: let real column content decide, and let the wrapper scroll */
+  min-width: 460px;
+}
+.md-body :is(th, td) {
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--edge);
+  overflow-wrap: anywhere;
+}
+.md-body th {
+  background: var(--raise);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  position: sticky; top: 0;
+}
+.md-body tr:last-child :is(th, td) { border-bottom: 0; }
+.md-body tbody tr { transition: background var(--t-hov) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .md-body tbody tr:hover { background: var(--raise); }
+}
+
+/* ---------------------------------------------------------------------------
+   Figures
+   --------------------------------------------------------------------------- */
+.md-body .md-img, .md-body img {
+  max-width: 100%; height: auto; display: block;
+  margin: 1em 0; border-radius: var(--r-1);
+  outline: 1px solid rgba(255,255,255,.1); outline-offset: -1px;
+}
+/* Diagrams.
+   Rendered as a labelled source figure rather than a drawn graph: this build
+   ships as one self-contained file, and pulling a ~1 MB renderer off a CDN to
+   draw six boxes is not a trade worth making. The definition is the artifact
+   an engineer would paste into their own tooling anyway. */
+.md-body .md-diagram {
+  margin: 1.3em 0;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-1);
+  background: var(--sink);
+  overflow: hidden;
+}
+.md-body .md-diagram figcaption {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-4);
+  padding: 9px 14px;
+  background: var(--raise);
+  border-bottom: 1px solid var(--edge);
+}
+.md-body .md-diagram .mermaid {
+  margin: 0; padding: 14px 16px;
+  font-family: var(--f-mono); font-size: 12px; line-height: 1.65;
+  color: var(--ink-3);
+  white-space: pre; overflow-x: auto;
+  background: none; border: 0;
+}
+.md-body .md-diagram .mermaid svg { max-width: 100%; height: auto; }
+
+/* ===========================================================================
+   ROUTE TRANSITIONS + DEMO POLISH
+   ---------------------------------------------------------------------------
+   Navigation is a "tens of times per session" interaction, so the entrance is
+   deliberately near-imperceptible: 220ms, opacity plus a 10px rise, no scale.
+   Anything longer turns every click into a wait.
+   =========================================================================== */
+
+@keyframes routeIn {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.main > * { animation: routeIn .22s var(--ease) both; }
+
+/* Staggered entrance for a wall of tiles. Only the first eight are staggered;
+   past that the delay is longer than the animation and it reads as lag. */
+.wall > *, .groups > *, .grid > *, .briefs > * { animation: routeIn .3s var(--ease) both; }
+.wall > *:nth-child(1),.groups > *:nth-child(1),.grid > *:nth-child(1),.briefs > *:nth-child(1){animation-delay:.02s}
+.wall > *:nth-child(2),.groups > *:nth-child(2),.grid > *:nth-child(2),.briefs > *:nth-child(2){animation-delay:.05s}
+.wall > *:nth-child(3),.groups > *:nth-child(3),.grid > *:nth-child(3),.briefs > *:nth-child(3){animation-delay:.08s}
+.wall > *:nth-child(4),.groups > *:nth-child(4),.grid > *:nth-child(4),.briefs > *:nth-child(4){animation-delay:.11s}
+.wall > *:nth-child(5),.groups > *:nth-child(5),.grid > *:nth-child(5),.briefs > *:nth-child(5){animation-delay:.14s}
+.wall > *:nth-child(6),.groups > *:nth-child(6),.grid > *:nth-child(6),.briefs > *:nth-child(6){animation-delay:.17s}
+.wall > *:nth-child(7),.groups > *:nth-child(7),.grid > *:nth-child(7),.briefs > *:nth-child(7){animation-delay:.20s}
+.wall > *:nth-child(8),.groups > *:nth-child(8),.grid > *:nth-child(8),.briefs > *:nth-child(8){animation-delay:.23s}
+
+/* A document arriving in the review pane gets its own gentler entrance —
+   it is a big block of text and a hard swap is jarring. */
+.md-body, .rawdoc { animation: routeIn .32s var(--ease) both; }
+
+/* Focus ring — one definition, everywhere, so keyboard users are never lost. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--plasma-b);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection picks up the brand rather than the browser default. */
+::selection { background: rgba(139, 92, 246, .32); color: #fff; }
+
+/* Scrollbars, themed. Chromium only; Firefox falls back to its own. */
+* { scrollbar-width: thin; scrollbar-color: var(--raise-3) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--raise-3); border-radius: 6px;
+  border: 2px solid transparent; background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--edge-2); background-clip: content-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  .main > *, .wall > *, .groups > *, .grid > *, .briefs > *,
+  .md-body, .rawdoc { animation: none; }
+}
