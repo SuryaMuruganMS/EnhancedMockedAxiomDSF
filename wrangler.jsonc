@@ -1,0 +1,23 @@
+{
+  // ---------------------------------------------------------------------
+  // AxiomDSF (mocked showcase build) — Workers Static Assets
+  //
+  // Angular 17 browser build, fully client-side, no backend. Wrangler's
+  // framework auto-detection refuses Angular below 19 and aborts the
+  // deploy; declaring the output directory here skips that detection
+  // entirely, which is both the fix and the more honest configuration —
+  // the folder is known, so nothing needs guessing.
+  // ---------------------------------------------------------------------
+  "name": "enhancedmockedaxiomdsf",
+  "compatibility_date": "2025-09-01",
+
+  "assets": {
+    "directory": "./dist/axiom-demo",
+
+    // The demo uses hash routing, so deep links resolve in the browser and
+    // never reach the edge as a path. This is the safety net for the ones
+    // that do: any unmatched path serves index.html and Angular routes it,
+    // replacing the `/* /index.html 200` rule in _redirects.
+    "not_found_handling": "single-page-application"
+  }
+}
