@@ -8,7 +8,7 @@
   // entirely, which is both the fix and the more honest configuration —
   // the folder is known, so nothing needs guessing.
   // ---------------------------------------------------------------------
-  "name": "enhancedmockedaxiomdsf",
+  "name": "axiomdsf",
   "compatibility_date": "2025-09-01",
 
   "assets": {
