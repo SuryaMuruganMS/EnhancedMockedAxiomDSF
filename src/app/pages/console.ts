@@ -96,7 +96,7 @@ const LINE = [
       }
 
       <!-- ---------- line completion ---------- -->
-      <article class="w w--sm glass glass--live glass--spot lift ringw" axSpot>
+      <article class="w w--sm w--mid glass glass--live glass--spot lift ringw" axSpot>
         <div class="tag">Line</div>
         <div class="ringw-b">
           <ax-ring [value]="done()" [total]="10" [size]="72"/>
@@ -135,7 +135,7 @@ const LINE = [
       </article>
 
       <!-- ---------- throughput heat ---------- -->
-      <article class="w w--sm glass glass--live glass--spot lift" axSpot>
+      <article class="w w--sm w--mid glass glass--live glass--spot lift" axSpot>
         <div class="w-top"><div class="tag">Density</div><div class="tag mono">{{ flows().length }}</div></div>
         <ax-heat [data]="heat()" [cols]="10" unit="run"/>
         <div class="hlab mono"><span>REQ</span><span>SEC</span></div>
@@ -161,12 +161,12 @@ const LINE = [
       <!-- ---------- stage tally ---------- -->
       <article class="w w--wide glass glass--live glass--spot lift" axSpot>
         <div class="w-top"><div class="tag">Per stage</div><div class="tag mono">{{ done() }}/10 approved</div></div>
-        <ax-bars [data]="perStage()" [colors]="perStageColors()" [labels]="keys" [height]="46"/>
+        <ax-bars [data]="perStage()" [colors]="perStageColors()" [labels]="keys" [height]="68"/>
         <div class="blab mono">@for (k of keys; track k) { <span>{{ k }}</span> }</div>
       </article>
 
       <!-- ---------- workspaces ---------- -->
-      <article class="w w--wide glass glass--spot" axSpot>
+      <article class="w w--wide w--mid glass glass--spot" axSpot>
         <div class="w-top"><div class="tag">Workspaces</div><a routerLink="/workspaces" class="tag lnk etrace">All</a></div>
         @if (spaces().length) {
           <div class="ws">
@@ -218,7 +218,19 @@ const LINE = [
 
     /* wall */
     .wall { display:grid; gap:10px; grid-template-columns:repeat(12,1fr); }
-    .w { padding:16px 17px; min-height:112px; }
+    /* A column, not a block. The wall grid stretches every card in a row to
+       the tallest card's height; as a block the card handed that height to
+       nobody, so a short widget clumped at the top and left a dead band below
+       it while its own content could still overflow the padding. As a column
+       the header keeps its intrinsic height and the widget is given the rest. */
+    .w { padding:16px 17px; min-height:112px; display:flex; flex-direction:column; }
+    .w > :last-child { min-height:0; }
+    /* Some widgets have an intrinsic size — a 72px ring, a row of square heat
+       cells — and genuinely cannot use the height the row gives them. Pinning
+       that remainder below the content reads as a layout bug; splitting it
+       above and below reads as deliberate. The header stays put either way. */
+    .w--mid > :nth-child(2) { margin-top:auto; }
+    .w--mid > :last-child   { margin-bottom:auto; }
     .w--sm   { grid-column:span 3; }
     .w--wide { grid-column:span 6; }
     .w--full { grid-column:span 12; }
@@ -226,7 +238,7 @@ const LINE = [
     @media (max-width:1100px){ .w--sm{grid-column:span 6;} .w--wide,.w--tall{grid-column:span 12;} .w--tall{grid-row:auto;} }
     @media (max-width:620px){ .w--sm{grid-column:span 12;} }
 
-    .w-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px; }
+    .w-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px; flex:none; }
     .big { font-family:var(--f-display); font-size:2.4rem; font-weight:700; letter-spacing:-.04em; margin:6px 0 4px; }
     .sk { height:70px; margin-top:10px; }
     .void { color:var(--ink-4); font-size:13px; padding:10px 0; }

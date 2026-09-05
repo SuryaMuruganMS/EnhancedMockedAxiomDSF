@@ -227,7 +227,9 @@ export class Heat {
     .gauge { position:relative; }
     .gauge svg { width:100%; height:auto; display:block; overflow:visible; }
     .g-t { fill:none; stroke:var(--raise-2); stroke-width:6; stroke-linecap:round; }
-    .g-v { fill:none; stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset .9s var(--ease); }
+    /* butt, not round: at a low reading the two round caps overlap into a
+       floating pill that reads as a rendering bug rather than as 4%. */
+    .g-v { fill:none; stroke-width:6; stroke-linecap:butt; transition:stroke-dashoffset .9s var(--ease); }
     .g-red { stroke:var(--bad); stroke-width:1.5; opacity:.5; }
     .g-v-n { position:absolute; left:0; right:0; bottom:0; text-align:center;
              font-size:17px; font-weight:600; color:var(--ink); }
@@ -270,21 +272,52 @@ export class Gauge {
         @if (!parts().length) { <div class="sp-empty"></div> }
       </div>
       <div class="sp-key">
-        @for (p of parts(); track p.k) {
-          <span class="sp-ki"><i [style.background]="p.c"></i>{{ p.k }}<b class="mono">{{ p.v }}</b></span>
+        @for (p of keys(); track p.k) {
+          <span class="sp-ki" [class.sp-ki--zero]="!p.v"><i [style.background]="p.c"></i>{{ p.k }}<b class="mono">{{ p.v }}</b></span>
         }
       </div>
     </div>
   `,
   styles: [`
-    .sp-bar { display:flex; gap:2px; height:8px; border-radius:var(--r-full); overflow:hidden; }
+    /* The card this sits in is sized by its neighbours in the wall grid, so the
+       widget has to be willing to use the height it is given. Previously the
+       bar and an inline-wrapped legend clumped at the top and left ~130px of
+       dead space underneath, which read as a layout bug. */
+    /* The host has to be a flex item in its own right: a percentage height
+       here would resolve against the whole card including its header, which is
+       what pushed the legend past the card's bottom padding. */
+    :host { display:flex; flex-direction:column; flex:1; min-height:0; align-self:stretch; }
+    .sp { display:flex; flex-direction:column; flex:1; min-height:0; }
+    .sp-bar { display:flex; gap:2px; height:8px; border-radius:var(--r-full); overflow:hidden; flex:none; }
     .sp-seg { background:var(--c); border-radius:2px; transition:width .7s var(--ease), filter var(--t-hov) var(--ease); min-width:3px; }
     @media (hover: hover) and (pointer: fine) { .sp-seg:hover { filter:brightness(1.4); } }
     .sp-empty { flex:1; background:var(--raise-2); }
-    .sp-key { display:flex; flex-wrap:wrap; gap:5px 13px; margin-top:11px; }
-    .sp-ki { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-3); }
-    .sp-ki i { width:6px; height:6px; border-radius:2px; flex:none; }
-    .sp-ki b { color:var(--ink-2); font-weight:600; font-size:11.5px; }
+
+    /* Each state becomes a small stat cell rather than an inline chip, so the
+       legend grows to fill the card instead of leaving a gap below it. */
+    .sp-key {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+      grid-auto-rows:minmax(34px, 1fr);
+      align-content:stretch;
+      gap:4px;
+      margin-top:14px;
+      flex:1; min-height:0;
+    }
+    .sp-ki {
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:var(--r-1);
+      background:var(--raise);
+      font-size:12px; color:var(--ink-3);
+      transition:background var(--t-hov) var(--ease);
+    }
+    /* An empty state still earns its row, but must not compete with a real
+       reading for attention. */
+    .sp-ki--zero { opacity:.45; }
+    .sp-ki--zero b { color:var(--ink-3); font-weight:500; }
+    @media (hover: hover) and (pointer: fine) { .sp-ki:hover { background:var(--raise-2); } }
+    .sp-ki i { width:6px; height:6px; border-radius:2px; flex:none; align-self:center; }
+    .sp-ki b { color:var(--ink); font-weight:600; font-size:13px; margin-left:auto; }
     @media (prefers-reduced-motion: reduce) { .sp-seg { transition:none; } }
   `],
 })
@@ -292,11 +325,22 @@ export class Split {
   @Input() set data(v: { k: string; v: number; c: string }[]) { this._d.set(v ?? []); }
   private _d = signal<{ k: string; v: number; c: string }[]>([]);
 
+  /** Bar segments: only states that actually have rows can be drawn. */
   parts = computed(() => {
     const d = this._d().filter(p => p.v > 0);
     const total = d.reduce((a, p) => a + p.v, 0) || 1;
     return d.map(p => ({ ...p, pct: (p.v / total) * 100 }));
   });
+
+  /**
+   * Legend rows: every state, including the empty ones.
+   *
+   * The bar can only draw what exists, but "Failed 0" is information an
+   * operator wants — a run with no failures should say so rather than leave
+   * the reader inferring it from an absence. It also gives the card enough
+   * rows to fill the height the wall grid hands it.
+   */
+  keys = computed(() => this._d());
 }
 
 /* ---------------------------------------------------------------------------

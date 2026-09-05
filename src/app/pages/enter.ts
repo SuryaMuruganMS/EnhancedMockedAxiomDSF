@@ -557,10 +557,15 @@ type Mode = 'in' | 'up';
              overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     .rqs { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(316px,1fr)); }
-    .bl { padding:19px 20px; display:flex; flex-direction:column; gap:10px; }
+    /* The card itself had no rule — only its inner rows did — so every line sat
+       flush against the border with nothing between them. Padding matches the
+       other cards on this page (.bl 19/20, .num 21/20, .cell 22/20). */
+    .rq { padding:19px 20px; display:flex; flex-direction:column; gap:10px; }
     .rq-h { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    .rq-h h3 { font-size:1.02rem; }
-    .rq-s { font-size:12.5px; color:var(--ink-3); line-height:1.6; }
+    .rq-h h3 { font-size:1.02rem; line-height:1.3; }
+    /* Six summaries of different lengths would otherwise put the metric rule at
+       six different heights; absorbing the slack here aligns them across the row. */
+    .rq-s { font-size:12.5px; color:var(--ink-3); line-height:1.6; flex:1; }
     .rq-m { display:flex; flex-wrap:wrap; gap:15px; padding:11px 0; border-top:1px solid var(--edge);
             border-bottom:1px solid var(--edge); }
     .rq-mi { display:flex; flex-direction:column; gap:2px; font-size:10.5px; color:var(--ink-4); }
